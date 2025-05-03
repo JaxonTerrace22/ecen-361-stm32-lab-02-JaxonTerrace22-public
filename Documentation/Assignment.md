@@ -1,6 +1,6 @@
 # ECEN-361 Lab-02: Clocks, Timers, and Interrupts
 
-     Student Name:  Fill-in HERE
+     Student Name:  Nicholas Petersen
 
 ## Introduction and Objective of the Lab
 
@@ -75,9 +75,9 @@ Note the speed of D1/D2/D3 – they should seem like a 3-bit binary counter.
 Once you have all three LEDs blinking properly, answer the following questions:
 
 1. How fast does D1 turn on/off? [*answer here*]
-
+LED_D1 toggles at a speed of 1 second (500ms on, 500ms off)
 2. Do all LEDs toggle at *exactly* the same time? [*answer here*]
-
+No, LED_D2 toggles at 500ms, and LED_D3 toggles at 250ms. However, since they are at intervals of half of eachothers time, they will inevitably have synchronous moments.
 ## Part 2: Changing the clock tree
 
 Change the clock tree to adjust the rates at which the LEDs blink.
@@ -92,11 +92,11 @@ Change the clock tree to adjust the rates at which the LEDs blink.
 ## Part 2 Questions (3 pts)
 
 1. What has happened to the speed of the timers? [*answer here*]
-
+The clock frequency was divided by a factor of 8, which slowed time in between interval by 8 seconds, meaning the interrupt intervals became 8 times slower.
 2. What is the new frequency of LED D1? [*answer here*]
-
+Since it is mulitplied by a factor of 1/8, 1/8 = .125 Hz.
 3. When we changed the frequency, did the Seven-Segment Light update rate change?  (hint, look at the clocks driving the APB1, APB2 buses and which timers are on which bus.  Recall that the Seven-Segment timer is Tim17) [*answer here*]
-
+Yes, they were updated to a reduced speed by a factor of 8, since our APB prescaler was changed to /8
 ## Part 3: Reaction Timer (5 pts)
 
 In addition to performing useful tasks at set intervals, timers can also be used to measure elapsed time of an event. The events can be triggered by software, or by a hardware input.
@@ -118,6 +118,19 @@ Code for this part is organized in the **ReactionTester.c** source file and **ma
 ```c
 /* Student Start HERE */
 
+// Step 1 display 
+MultiFunctionShield_Display(-1);  // -1 displays "----" which is waiting
+
+// Step 2 wait for random # of milliseconds
+HAL_Delay(rand_millisec);  // Use HAL_Delay to wait for rand_millisec
+
+// Step 3 turn on all 7 Segment lites to "8888" 
+MultiFunctionShield_Display(8888);
+
+// Step 4 start reaction timer (TIM3)
+__HAL_TIM_SET_COUNTER(&htim3, 0);  // reset TIM3 to 0
+HAL_TIM_Base_Start(&htim3);  // start TIM3
+
 /* Student End HERE */
 ```
 
@@ -135,3 +148,20 @@ Note that for the reaction timer to be accurate, because you changed the prescal
 * Make the final reaction time flash on/off
 
 If you do any of these items – just mention what and how it worked, [*here*].
+
+// Extra credit
+if (__HAL_TIM_GET_COUNTER(&htim3) == 0) {
+    MultiFunctionShield_Display(1234);  //"CHEAT" or string written
+    return;  // to avoid recording reaction time
+}
+
+// 1) stop the reaction timer (TIM3)
+HAL_TIM_Base_Stop(&htim3); //cheaters dont get scores recorded
+
+// 2) read timer value
+last_reaction_time_in_millisec = __HAL_TIM_GetCounter(&htim3) / 10; 
+
+// 3) display value
+MultiFunctionShield_Display(last_reaction_time_in_millisec);
+
+Chose 1234 as placeholder for CHEAT if you get caught cheating. If the counter is still at zero, it means it hasn't start counting and the player pressed stop too early. The 1234 code also exits the game so that their cheater scores are not recorded.
