@@ -35,7 +35,6 @@ extern bool got_stop_button;
 extern bool got_fastest_button;
 extern int best_reaction_time_in_millisec;
 
-// Globals
 int rand_millisec;
 int last_reaction_time_in_millisec = 0;
 bool started_doing_reaction_timers = false;
@@ -83,30 +82,30 @@ void got_stop()
 {
     /* Here's the code for the STOP button --
      * When pushed:
-     1.) Stop the random timer
-     2.) Read the value of timer
-     3.) Display the value
+     1) Stop timer
+     2) Read value of timer
+     3) Showvalue
      */
     if (started_doing_reaction_timers)
     {
         /**************** STUDENT TO FILL IN START HERE ********************/
-        // 1.) Stop the random timer (TIM3)
+        // 1.) Stop  timer (TIM3)
         HAL_TIM_Base_Stop(&htim3);
 
-        // 2.) Read the value of the timer -- this step provided
+        // 2.) Read timer -- this step provided
         last_reaction_time_in_millisec = __HAL_TIM_GetCounter(&htim3) / 10; // As per original code
 
-        // 3.) Display the value
+        // 3.) Display value
         MultiFunctionShield_Display(last_reaction_time_in_millisec);
         /**************** STUDENT TO FILL IN END HERE ********************/
 
-        // Keep the best time in a global variable
+        // Keep the best time in variable
         if (last_reaction_time_in_millisec < best_reaction_time_in_millisec)
         {
             best_reaction_time_in_millisec = last_reaction_time_in_millisec;
         }
 
-        // Show some stats
+        // Show stats
         printf("Random Delay was: %d\n\r", rand_millisec);
         printf("Reaction Time from Timer   : %d\n\r", last_reaction_time_in_millisec);
 
