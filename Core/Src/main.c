@@ -47,6 +47,8 @@
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim16;
 TIM_HandleTypeDef htim17;
+TIM_HandleTypeDef htim2;  // Added for LED_D2
+TIM_HandleTypeDef htim4;  // Added for LED_D3
 
 UART_HandleTypeDef huart2;
 
@@ -64,6 +66,8 @@ static void MX_USART2_UART_Init(void);
 static void MX_TIM17_Init(void);
 static void MX_TIM16_Init(void);
 static void MX_TIM3_Init(void);
+static void MX_TIM2_Init(void);  // Added for LED_D2
+static void MX_TIM4_Init(void);  // Added for LED_D3
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
@@ -99,7 +103,6 @@ int main(void)
 
   /* USER CODE BEGIN Init */
 
-
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -115,6 +118,8 @@ int main(void)
   MX_TIM17_Init();
   MX_TIM16_Init();
   MX_TIM3_Init();
+  MX_TIM2_Init();  // Added for LED_D2
+  MX_TIM4_Init();  // Added for LED_D3
   /* USER CODE BEGIN 2 */
 
   // Start timer
@@ -122,13 +127,12 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim16);  // LED-D1 toggle according to Timer16   DONT CHANGE
 
   /************  STUDENT TO FILL IN HERE START *********************/
+  // Add your Timer Start for LED-D2 HERE
+  HAL_TIM_Base_Start_IT(&htim2);  // Start timer for LED_D2
 
-    // Add your Timer Start for LED-D2 HERE
-    // Add your Timer Start for LED-D3 HERE
-
+  // Add your Timer Start for LED-D3 HERE
+  HAL_TIM_Base_Start_IT(&htim4);  // Start timer for LED_D3
   /************  STUDENT TO FILL IN HERE END   *********************/
-
-
 
   MultiFunctionShield_Clear();
   /* USER CODE END 2 */
@@ -145,18 +149,16 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	// show_a_random_number();
-	  while (!got_start_button);
-	  got_start();
-	  got_start_button = false;
-	  while (!got_stop_button);
-	  got_stop();
-	  got_stop_button = false;
-	  MX_TIM3_Init();   // reset the reaction timer
-	// Display_Waiting();
-
-
-	}
+    // show_a_random_number();
+    while (!got_start_button);
+    got_start();
+    got_start_button = false;
+    while (!got_stop_button);
+    got_stop();
+    got_stop_button = false;
+    MX_TIM3_Init();   // reset the reaction timer
+    // Display_Waiting();
+  }
   /* USER CODE END 3 */
 }
 
@@ -216,7 +218,6 @@ void SystemClock_Config(void)
   */
 static void MX_TIM3_Init(void)
 {
-
   /* USER CODE BEGIN TIM3_Init 0 */
 
   /* USER CODE END TIM3_Init 0 */
@@ -251,7 +252,6 @@ static void MX_TIM3_Init(void)
   /* USER CODE BEGIN TIM3_Init 2 */
 
   /* USER CODE END TIM3_Init 2 */
-
 }
 
 /**
@@ -261,7 +261,6 @@ static void MX_TIM3_Init(void)
   */
 static void MX_TIM16_Init(void)
 {
-
   /* USER CODE BEGIN TIM16_Init 0 */
 
   /* USER CODE END TIM16_Init 0 */
@@ -283,7 +282,6 @@ static void MX_TIM16_Init(void)
   /* USER CODE BEGIN TIM16_Init 2 */
 
   /* USER CODE END TIM16_Init 2 */
-
 }
 
 /**
@@ -293,7 +291,6 @@ static void MX_TIM16_Init(void)
   */
 static void MX_TIM17_Init(void)
 {
-
   /* USER CODE BEGIN TIM17_Init 0 */
 
   /* USER CODE END TIM17_Init 0 */
@@ -315,7 +312,64 @@ static void MX_TIM17_Init(void)
   /* USER CODE BEGIN TIM17_Init 2 */
 
   /* USER CODE END TIM17_Init 2 */
+}
 
+/**
+  * @brief TIM2 Initialization Function (for LED_D2)
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 8000 - 1; // 80 MHz / 8000 = 10 kHz
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 5000 - 1;    // 5000 / 10 kHz = 500 ms
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
+}
+
+/**
+  * @brief TIM4 Initialization Function (for LED_D3)
+  * @param None
+  * @retval None
+  */
+static void MX_TIM4_Init(void)
+{
+  /* USER CODE BEGIN TIM4_Init 0 */
+
+  /* USER CODE END TIM4_Init 0 */
+
+  /* USER CODE BEGIN TIM4_Init 1 */
+
+  /* USER CODE END TIM4_Init 1 */
+  htim4.Instance = TIM4;
+  htim4.Init.Prescaler = 8000 - 1; // 80 MHz / 8000 = 10 kHz
+  htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim4.Init.Period = 2500 - 1;    // 2500 / 10 kHz = 250 ms
+  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM4_Init 2 */
+
+  /* USER CODE END TIM4_Init 2 */
 }
 
 /**
@@ -325,7 +379,6 @@ static void MX_TIM17_Init(void)
   */
 static void MX_USART2_UART_Init(void)
 {
-
   /* USER CODE BEGIN USART2_Init 0 */
 
   /* USER CODE END USART2_Init 0 */
@@ -350,7 +403,6 @@ static void MX_USART2_UART_Init(void)
   /* USER CODE BEGIN USART2_Init 2 */
 
   /* USER CODE END USART2_Init 2 */
-
 }
 
 /**
@@ -361,8 +413,8 @@ static void MX_USART2_UART_Init(void)
 static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
-/* USER CODE BEGIN MX_GPIO_Init_1 */
-/* USER CODE END MX_GPIO_Init_1 */
+  /* USER CODE BEGIN MX_GPIO_Init_1 */
+  /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
@@ -433,12 +485,11 @@ static void MX_GPIO_Init(void)
   HAL_NVIC_SetPriority(EXTI4_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 
-/* USER CODE BEGIN MX_GPIO_Init_2 */
-/* USER CODE END MX_GPIO_Init_2 */
+  /* USER CODE BEGIN MX_GPIO_Init_2 */
+  /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
-
 
 /**
   * @brief  Retargets the C library printf function to the USART.
@@ -454,55 +505,55 @@ PUTCHAR_PROTOTYPE
   return ch;
 }
 
-
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-	{
-	// All three buttons generate GPIO interrupts
-	// Don't spend much time in the ISR because there are other interrupts happening
-	switch(GPIO_Pin)
-	{
-	case Button_1_Pin:
-		got_start_button = true;
-		break;
-	case Button_2_Pin:
-		got_stop_button = true;
-		break;
-	case Button_3_Pin:
-		// Here's the code for the Show Fastest button --
-		got_fastest_button = true;
-		MultiFunctionShield_Display(best_reaction_time_in_millisec);
-		break;
-	default:
+{
+  // All three buttons generate GPIO interrupts
+  // Don't spend much time in the ISR because there are other interrupts happening
+  switch(GPIO_Pin)
+  {
+    case Button_1_Pin:
+      got_start_button = true;
+      break;
+    case Button_2_Pin:
+      got_stop_button = true;
+      break;
+    case Button_3_Pin:
+      // Here's the code for the Show Fastest button --
+      got_fastest_button = true;
+      MultiFunctionShield_Display(best_reaction_time_in_millisec);
+      break;
+    default:
       __NOP();
-	}
+  }
 }
-
-
-
-
 
 // Callback: timer has rolled over
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-// Check which version of the timer triggered this callback and toggle the right LED
+  // Check which version of the timer triggered this callback and toggle the right LED
   if (htim == &htim16 )
   {
-	HAL_GPIO_TogglePin(LED_D1_GPIO_Port, LED_D1_Pin);
+    HAL_GPIO_TogglePin(LED_D1_GPIO_Port, LED_D1_Pin);
   }
-/** This timer has to be here to cycle thru the 7-Seg LED displays **/
+  /** This timer has to be here to cycle thru the 7-Seg LED displays **/
   if (htim == &htim17 )
   {
-	  MultiFunctionShield__ISRFunc();
+    MultiFunctionShield__ISRFunc();
   }
 
   /**************** STUDENT TO FILL IN START HERE ********************/
   /*   See example above where the htim
    *   Need to put in the code to toggle D2 and D3 when their respective timers have expired
-   *
    */
+  if (htim == &htim2)
+  {
+    HAL_GPIO_TogglePin(LED_D2_GPIO_Port, LED_D2_Pin);  // Toggle LED_D2
+  }
+  if (htim == &htim4)
+  {
+    HAL_GPIO_TogglePin(LED_D3_GPIO_Port, LED_D3_Pin);  // Toggle LED_D3
+  }
   /**************** STUDENT TO FILL IN END HERE ********************/
-
-
 }
 
 /* USER CODE END 4 */
