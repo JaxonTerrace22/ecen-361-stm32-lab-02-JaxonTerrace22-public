@@ -3,6 +3,7 @@
   ******************************************************************************
   * @file           : main.c
   * @brief          : Main program body
+  * @author         : Nicholas Petersen
   ******************************************************************************
   * @attention
   *
@@ -56,6 +57,9 @@ UART_HandleTypeDef huart2;
 bool got_start_button = false;
 bool got_stop_button = false;
 bool got_fastest_button = false;
+int best_reaction_time_in_millisec = 99999;  // Start with something easy to beat
+extern int last_reaction_time_in_millisec;   // Defined in ReactionTester.c
+bool display_flash = false;                  // For flashing reaction time
 
 /* USER CODE END PV */
 
@@ -69,15 +73,7 @@ static void MX_TIM3_Init(void);
 static void MX_TIM2_Init(void);  // Added for LED_D2
 static void MX_TIM4_Init(void);  // Added for LED_D3
 /* USER CODE BEGIN PFP */
-/* Private function prototypes -----------------------------------------------*/
 #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
-
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
-void show_a_random_number(void);
-void got_start(void);
-void got_stop(void);
-void got_fastest(void);
-int best_reaction_time_in_millisec = 99999;  //Start with something easy to beat
 
 /* USER CODE END PFP */
 
@@ -122,17 +118,11 @@ int main(void)
   MX_TIM4_Init();  // Added for LED_D3
   /* USER CODE BEGIN 2 */
 
-  // Start timer
-  HAL_TIM_Base_Start_IT(&htim17);  // LED SevenSeg cycle thru them   DONT CHANGE
-  HAL_TIM_Base_Start_IT(&htim16);  // LED-D1 toggle according to Timer16   DONT CHANGE
-
-  /************  STUDENT TO FILL IN HERE START *********************/
-  // Add your Timer Start for LED-D2 HERE
-  HAL_TIM_Base_Start_IT(&htim2);  // Start timer for LED_D2
-
-  // Add your Timer Start for LED-D3 HERE
-  HAL_TIM_Base_Start_IT(&htim4);  // Start timer for LED_D3
-  /************  STUDENT TO FILL IN HERE END   *********************/
+  // Start timers
+  HAL_TIM_Base_Start_IT(&htim17);  // SevenSeg cycle
+  HAL_TIM_Base_Start_IT(&htim16);  // LED_D1 toggle (1 second)
+  HAL_TIM_Base_Start_IT(&htim2);   // LED_D2 toggle (500 ms)
+  HAL_TIM_Base_Start_IT(&htim4);   // LED_D3 toggle (250 ms)
 
   MultiFunctionShield_Clear();
   /* USER CODE END 2 */
@@ -140,24 +130,23 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   Clear_LEDs();
-  printf("\033\143");  // clear the terminal before printing
+  printf("\033\143");  // Clear the terminal
   printf("Hello Lab-2 -- Timers and Interrupts \n\r\n\r");
-  srand((unsigned) uwTick );
+  srand((unsigned) uwTick);
 
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    // show_a_random_number();
+    MultiFunctionShield_Display(-1);  // Display "----" (waiting)
     while (!got_start_button);
     got_start();
     got_start_button = false;
     while (!got_stop_button);
     got_stop();
     got_stop_button = false;
-    MX_TIM3_Init();   // reset the reaction timer
-    // Display_Waiting();
+    MX_TIM3_Init();  // Reset reaction timer
   }
   /* USER CODE END 3 */
 }
@@ -202,9 +191,8 @@ void SystemClock_Config(void)
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
-
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;  // Reset to x1 for Part 3
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;  // Reset to x1 for Part 3
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK)
   {
     Error_Handler();
@@ -229,7 +217,7 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 8000-1;
+  htim3.Init.Prescaler = 8000-1;  // 80 MHz / 8000 = 10 kHz (0.1 ms/tick)
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim3.Init.Period = 65535;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -269,9 +257,9 @@ static void MX_TIM16_Init(void)
 
   /* USER CODE END TIM16_Init 1 */
   htim16.Instance = TIM16;
-  htim16.Init.Prescaler = 8000 -1;
+  htim16.Init.Prescaler = 8000 - 1;  // 80 MHz / 8000 = 10 kHz
   htim16.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim16.Init.Period = 10000;
+  htim16.Init.Period = 10000 - 1;    // 10000 / 10 kHz = 1 second
   htim16.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim16.Init.RepetitionCounter = 0;
   htim16.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
@@ -299,7 +287,7 @@ static void MX_TIM17_Init(void)
 
   /* USER CODE END TIM17_Init 1 */
   htim17.Instance = TIM17;
-  htim17.Init.Prescaler = 800-1;
+  htim17.Init.Prescaler = 800 - 1;
   htim17.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim17.Init.Period = 100;
   htim17.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -329,9 +317,9 @@ static void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 1 */
   htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 8000 - 1; // 80 MHz / 8000 = 10 kHz
+  htim2.Init.Prescaler = 8000 - 1;  // 80 MHz / 8000 = 10 kHz
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 5000 - 1;    // 5000 / 10 kHz = 500 ms
+  htim2.Init.Period = 5000 - 1;     // 5000 / 10 kHz = 500 ms
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -358,9 +346,9 @@ static void MX_TIM4_Init(void)
 
   /* USER CODE END TIM4_Init 1 */
   htim4.Instance = TIM4;
-  htim4.Init.Prescaler = 8000 - 1; // 80 MHz / 8000 = 10 kHz
+  htim4.Init.Prescaler = 8000 - 1;  // 80 MHz / 8000 = 10 kHz
   htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim4.Init.Period = 2500 - 1;    // 2500 / 10 kHz = 250 ms
+  htim4.Init.Period = 2500 - 1;     // 2500 / 10 kHz = 250 ms
   htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
@@ -441,12 +429,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(LM35_IN_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PA0 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG_ADC_CONTROL;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
   /*Configure GPIO pins : Button_1_Pin Button_2_Pin */
   GPIO_InitStruct.Pin = Button_1_Pin|Button_2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
@@ -475,13 +457,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /* EXTI interrupt init*/
+  /* EXTI interrupt init */
   HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI0_IRQn);
-
   HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI1_IRQn);
-
   HAL_NVIC_SetPriority(EXTI4_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 
@@ -498,17 +478,12 @@ static void MX_GPIO_Init(void)
   */
 PUTCHAR_PROTOTYPE
 {
-  /* Place your implementation of fputc here */
-  /* e.g. write a character to the USART1 and Loop until the end of transmission */
   HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, 0xFFFF);
-
   return ch;
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-  // All three buttons generate GPIO interrupts
-  // Don't spend much time in the ISR because there are other interrupts happening
   switch(GPIO_Pin)
   {
     case Button_1_Pin:
@@ -518,42 +493,41 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
       got_stop_button = true;
       break;
     case Button_3_Pin:
-      // Here's the code for the Show Fastest button --
       got_fastest_button = true;
-      MultiFunctionShield_Display(best_reaction_time_in_millisec);
+      got_fastest();
       break;
     default:
       __NOP();
   }
 }
 
-// Callback: timer has rolled over
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-  // Check which version of the timer triggered this callback and toggle the right LED
-  if (htim == &htim16 )
+  if (htim == &htim16)
   {
-    HAL_GPIO_TogglePin(LED_D1_GPIO_Port, LED_D1_Pin);
+    HAL_GPIO_TogglePin(LED_D1_GPIO_Port, LED_D1_Pin);  // Toggle LED_D1 (1 s)
   }
-  /** This timer has to be here to cycle thru the 7-Seg LED displays **/
-  if (htim == &htim17 )
+  if (htim == &htim17)
   {
-    MultiFunctionShield__ISRFunc();
+    MultiFunctionShield__ISRFunc();  // Seven-segment display update
+    // Flash reaction time every 500 ms
+    if (last_reaction_time_in_millisec != 0)
+    {
+      display_flash = !display_flash;
+      if (display_flash)
+        MultiFunctionShield_Display(last_reaction_time_in_millisec);
+      else
+        MultiFunctionShield_Display(-1);  // Blank display
+    }
   }
-
-  /**************** STUDENT TO FILL IN START HERE ********************/
-  /*   See example above where the htim
-   *   Need to put in the code to toggle D2 and D3 when their respective timers have expired
-   */
   if (htim == &htim2)
   {
-    HAL_GPIO_TogglePin(LED_D2_GPIO_Port, LED_D2_Pin);  // Toggle LED_D2
+    HAL_GPIO_TogglePin(LED_D2_GPIO_Port, LED_D2_Pin);  // Toggle LED_D2 (500 ms)
   }
   if (htim == &htim4)
   {
-    HAL_GPIO_TogglePin(LED_D3_GPIO_Port, LED_D3_Pin);  // Toggle LED_D3
+    HAL_GPIO_TogglePin(LED_D3_GPIO_Port, LED_D3_Pin);  // Toggle LED_D3 (250 ms)
   }
-  /**************** STUDENT TO FILL IN END HERE ********************/
 }
 
 /* USER CODE END 4 */
@@ -565,7 +539,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
   while (1)
   {
